@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -16,15 +24,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY")
+
     }
 
+    val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
+
     buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+        getByName("debug") {
+            buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+        }
+        getByName("release") {
+            buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         }
     }
     compileOptions {
@@ -36,19 +47,22 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
 dependencies {
+
+    implementation("androidx.activity:activity-ktx:1.11.0")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation("androidx.activity:activity-ktx:1.11.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.9")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
